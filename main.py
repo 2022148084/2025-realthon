@@ -124,15 +124,17 @@ class CourseReviewResponse(CourseReviewCreate):
     class Config:
         from_attributes = True
 
-# [ML Prediction] 
+# [ML Prediction]
 class HistogramPredictRequest(BaseModel):
     evaluation_item_id: int
+    total_students: Optional[int] = None  # If provided, returns student counts instead of probabilities
 
 class HistogramPredictResponse(BaseModel):
     evaluation_item_id: int
     histogram: dict
     num_samples: int
     sample_scores: List[float]
+    total_students: Optional[int] = None
 
 
 # ---------------------------------------------------------
@@ -322,7 +324,7 @@ async def predict_histogram(
 
     # Predict histogram
     try:
-        histogram = ml_predictor.predict(score_values)
+        histogram = ml_predictor.predict(score_values, total_students=request.total_students)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
 
@@ -330,7 +332,8 @@ async def predict_histogram(
         evaluation_item_id=request.evaluation_item_id,
         histogram=histogram,
         num_samples=len(score_values),
-        sample_scores=score_values
+        sample_scores=score_values,
+        total_students=request.total_students
     )
 
 

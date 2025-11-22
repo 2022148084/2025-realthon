@@ -124,15 +124,17 @@ class HistogramPredictor:
 
         return model, checkpoint
 
-    def predict(self, scores: List[float]) -> dict:
+    def predict(self, scores: List[float], total_students: int = None) -> dict:
         """
         Predict histogram distribution from sample scores.
 
         Args:
             scores: List of sample scores (0-100 range)
+            total_students: Total number of students in class (for denormalization)
+                          If None, returns probabilities (0-1 range)
 
         Returns:
-            Dictionary with histogram and statistics
+            Dictionary with histogram (either probabilities or student counts)
         """
         # Validate input
         if not scores:
@@ -156,18 +158,24 @@ class HistogramPredictor:
         # Convert to dict format
         histogram_values = predicted_hist.cpu().numpy()[0]
 
+        # Denormalize to student counts if total_students is provided
+        if total_students is not None:
+            histogram_values = histogram_values * total_students
+            # Round to nearest integer
+            histogram_values = np.round(histogram_values).astype(int)
+
         # Create result dictionary
         result = {
-            "0-10": float(histogram_values[0]),
-            "10-20": float(histogram_values[1]),
-            "20-30": float(histogram_values[2]),
-            "30-40": float(histogram_values[3]),
-            "40-50": float(histogram_values[4]),
-            "50-60": float(histogram_values[5]),
-            "60-70": float(histogram_values[6]),
-            "70-80": float(histogram_values[7]),
-            "80-90": float(histogram_values[8]),
-            "90-100": float(histogram_values[9]),
+            "0-10": int(histogram_values[0]) if total_students else float(histogram_values[0]),
+            "10-20": int(histogram_values[1]) if total_students else float(histogram_values[1]),
+            "20-30": int(histogram_values[2]) if total_students else float(histogram_values[2]),
+            "30-40": int(histogram_values[3]) if total_students else float(histogram_values[3]),
+            "40-50": int(histogram_values[4]) if total_students else float(histogram_values[4]),
+            "50-60": int(histogram_values[5]) if total_students else float(histogram_values[5]),
+            "60-70": int(histogram_values[6]) if total_students else float(histogram_values[6]),
+            "70-80": int(histogram_values[7]) if total_students else float(histogram_values[7]),
+            "80-90": int(histogram_values[8]) if total_students else float(histogram_values[8]),
+            "90-100": int(histogram_values[9]) if total_students else float(histogram_values[9]),
         }
 
         return result
