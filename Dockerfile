@@ -6,11 +6,21 @@ WORKDIR /app
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
+# Copy dependency files
 COPY pyproject.toml uv.lock ./
 
+# Install dependencies
 RUN uv sync --frozen --no-dev
 
-COPY . .
+# Copy application code
+COPY main.py ./
+
+# Copy ML model and related files
+COPY ML/ ./ML/
+
+# Copy any other necessary files
+COPY *.db ./
+COPY *.py ./
 
 EXPOSE 8000
 
